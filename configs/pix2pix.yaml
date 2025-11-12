@@ -1,0 +1,15 @@
+# Pix2Pix training config
+# Paths
+data:
+  root: data/paired_mri        # expects T1/ and T2/ subfolders with aligned PNGs
+  img_size: 256
+
+# Training
+train:
+  batch_size: 4
+  epochs: 5
+  lr: 0.0002
+  l1_lambda: 100.0
+  out_dir: ckpts/pix2pix
+
+device: auto  # 'cuda', 'cpu', or 'auto'

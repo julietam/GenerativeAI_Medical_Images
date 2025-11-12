@@ -101,15 +101,16 @@ Luego ajusta las rutas en los notebooks 03 y 04 si usas una estructura distinta.
 
 ### 4. Ejecutar Notebooks
 
-```bash
-jupyter notebook notebooks/
+```powershell
+jupyter notebook
 ```
 
 Recomendamos seguir el orden:
-1. `01_introduction.ipynb` - Exploración de datos
-2. `06_medigan_demo.ipynb` - Demo rápida con modelos pre-entrenados
-3. `02_gans_basics.ipynb` - Entrenar GANs desde cero
-4. Notebooks 03-05 según interés en modalidades específicas
+1. `01_introduction_mri.ipynb` - MONAI: carga y preprocesamiento IXI (3D → 2D)
+2. `02_gans_basics.ipynb` - Entrenar DCGAN desde cero
+3. `03_pix2pix_mri.ipynb` - T1→T2 con Pix2Pix (usa `data/paired_mri`)
+4. `04_cyclegan_ct_mri.ipynb` - MRI↔CT con CycleGAN (usa `data/unpaired_*`)
+5. `05_diffusion_xray.ipynb` - Diffusion (DDPM)
 
 ---
 
@@ -141,6 +142,28 @@ Recomendamos seguir el orden:
 - Hallucinations, Mode collapse
 - Validación clínica insuficiente
 - Bias y reproducibilidad
+
+---
+
+## 🧪 Demos y Scripts
+
+### Gradio: Pix2Pix MRI T1→T2
+- Lanza una UI mínima para cargar una T1 (PNG/JPG) y generar T2.
+- Requiere un checkpoint del generador (por ejemplo, entrenado con `scripts/train_pix2pix.py`).
+
+```powershell
+# Ejemplo
+python apps/pix2pix_demo.py --checkpoint ckpts/pix2pix/G_best.pt --device cpu --port 7860
+```
+
+### Entrenamiento por script (Pix2Pix)
+- Configurable vía YAML en `configs/pix2pix.yaml`.
+
+```powershell
+python scripts/train_pix2pix.py --config configs/pix2pix.yaml
+```
+
+Salida: checkpoints en `ckpts/pix2pix/` y métricas en consola.
 
 ---
 
