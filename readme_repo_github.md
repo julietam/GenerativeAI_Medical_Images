@@ -81,18 +81,23 @@ source venv/bin/activate  # En Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 3. Descargar Datasets
+### 3. Descargar/preparar datasets abiertos (MRI/CT)
 
-```bash
-# Datasets públicos pequeños para práctica
-cd data/
-bash download_datasets.sh
+Ver guías en `data/README.md`. Resumen rápido (Windows PowerShell):
+
+- IXI Brain MRI (T1/T2 → pares para Pix2Pix):
+
+```powershell
+python -m src.data.datasets ixi_pairs --ixi_root "C:\\path\\to\\IXI" --out_root data/paired_mri --img_size 256 --take_slices 1
 ```
 
-Esto descargará:
-- **Brain MRI samples** (IXI dataset subset: ~100 imágenes)
-- **Chest X-ray samples** (ChestX-ray14 subset: ~500 imágenes)
-- **Synthetic CT samples** (Para demos rápidas)
+- Chest CT (e.g., MosMedData → dominio B para CycleGAN):
+
+```powershell
+python -m src.data.datasets ct_slices --ct_root "C:\\path\\to\\CT_NIfTI" --out_root data/unpaired_ct --img_size 256 --take_slices 3
+```
+
+Luego ajusta las rutas en los notebooks 03 y 04 si usas una estructura distinta.
 
 ### 4. Ejecutar Notebooks
 
