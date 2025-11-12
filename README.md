@@ -384,9 +384,9 @@ Ver lista completa en [`docs/REFERENCIAS.md`](docs/REFERENCIAS.md)
 
 ## 📧 Contacto
 
-- **Instructor**: [Tu Nombre]
-- **Email**: tu.email@universidad.edu
-- **Office Hours**: [Días y horarios]
+- **Instructor**: Maria Julieta Mateos
+- **Email**: julieta8a3@gmail.com
+
 
 ---
 
