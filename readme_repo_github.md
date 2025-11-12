@@ -302,6 +302,32 @@ for epoch in range(num_epochs):
 
 ---
 
+## 🧪 Validación y Métricas (TorchMetrics)
+
+Este repositorio usa TorchMetrics para evaluar la calidad de los modelos generativos:
+
+- DCGAN (02_gans_basics.ipynb): FrechetInceptionDistance (FID) e InceptionScore (IS)
+- Pix2Pix (03_pix2pix_mri.ipynb): StructuralSimilarityIndexMeasure (SSIM) y PeakSignalNoiseRatio (PSNR) contra ground truth
+- CycleGAN (04_cyclegan_ct_mri.ipynb): SSIM y PSNR sobre la consistencia de ciclo (A→B→A y B→A→B)
+- Diffusion (05_diffusion_xray.ipynb): FID entre muestras generadas y el set de validación
+
+Salida y guardado de resultados:
+- Las figuras y grids se guardan automáticamente en `outputs/<modelo>/`:
+  - `outputs/dcgan/metrics.png`, `outputs/dcgan/samples.png`
+  - `outputs/pix2pix/metrics.png`, `outputs/pix2pix/val_grid.png`
+  - `outputs/cyclegan/metrics.png`, `outputs/cyclegan/a_b_a.png`, `outputs/cyclegan/b_a_b.png`
+  - `outputs/diffusion/metrics.png`, `outputs/diffusion/samples.png`
+
+Instalación rápida de métricas:
+
+```bash
+pip install torchmetrics
+```
+
+Nota: Para FID/IS, TorchMetrics descarga/usa un Inception por defecto. Las imágenes se re-escalan a [0,1] en el notebook antes de evaluar.
+
+---
+
 ## 📊 Resultados Esperados
 
 Al completar este repositorio, los estudiantes podrán:

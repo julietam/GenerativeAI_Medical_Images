@@ -4,8 +4,8 @@ import torch
 from typing import Optional, Dict, List
 
 
-def show_images(images: torch.Tensor, nrow: int = 8, figsize=(8, 8), title: Optional[str] = None):
-    """Show a grid of images in [-1,1] or [0,1]."""
+def show_images(images: torch.Tensor, nrow: int = 8, figsize=(8, 8), title: Optional[str] = None, save_path: Optional[str] = None):
+    """Show a grid of images in [-1,1] or [0,1]. Optionally save to disk."""
     imgs = images.detach().cpu()
     if imgs.min() < 0:  # assume [-1,1]
         imgs = (imgs + 1) / 2
@@ -28,11 +28,13 @@ def show_images(images: torch.Tensor, nrow: int = 8, figsize=(8, 8), title: Opti
     if title:
         fig.suptitle(title)
     plt.tight_layout()
+    if save_path:
+        fig.savefig(save_path, dpi=150)
     plt.show()
 
 
-def plot_curves(history: Dict[str, List[float]], figsize=(8, 4), title: Optional[str] = None):
-    plt.figure(figsize=figsize)
+def plot_curves(history: Dict[str, List[float]], figsize=(8, 4), title: Optional[str] = None, save_path: Optional[str] = None):
+    fig = plt.figure(figsize=figsize)
     for k, v in history.items():
         plt.plot(v, label=k)
     plt.xlabel('Epoch')
@@ -42,4 +44,6 @@ def plot_curves(history: Dict[str, List[float]], figsize=(8, 4), title: Optional
     plt.legend()
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
+    if save_path:
+        fig.savefig(save_path, dpi=150)
     plt.show()
