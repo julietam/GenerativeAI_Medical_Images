@@ -50,39 +50,48 @@ def postprocess_tensor_to_pil(x: torch.Tensor) -> Image.Image:
 
 
 def make_interface(G: torch.nn.Module, device: str = "cpu", img_size: int = 256):
-    title = "Pix2Pix MRI T1→T2 Demo"
+    title = "Pix2Pix MRI T1→T2 Demo (Live Metrics)"
     description = (
-        "Sube una imagen T1 (PNG/JPG). El modelo genera una imagen T2 sintética.\n"
-        "Se reportan SSIM/PSNR si están disponibles."
+        "Sube una imagen T1 (PNG/JPG). Opcionalmente sube la T2 real (ground truth).\n"
+        "El modelo genera una T2 sintética y, si proporcionas T2 real, se calculan SSIM/PSNR al vuelo."
     )
 
     if HAS_TM:
         ssim_metric = StructuralSimilarityIndexMeasure(data_range=1.0).to(device)
         psnr_metric = PeakSignalNoiseRatio(data_range=1.0).to(device)
 
-    def infer(image: Image.Image):
+    def infer(image: Image.Image, gt_image: Image.Image | None):
         with torch.no_grad():
             x = preprocess_pil_to_tensor(image, img_size=img_size).to(device)
             y = G(x)
             out_img = postprocess_tensor_to_pil(y)
-            # metrics (vs input only if user provides GT? here we only have input)
-            # If user uploads GT, we could accept 2 inputs; keep simple: no GT.
             ssim_val = None
             psnr_val = None
-            if HAS_TM:
-                # Compare output to input only for demonstration if user wants; otherwise leave None
-                pass
+            if gt_image is not None:
+                gt = preprocess_pil_to_tensor(gt_image, img_size=img_size).to(device)
+                y01 = (y + 1) / 2
+                gt01 = (gt + 1) / 2
+                if HAS_TM:
+                    ssim_val = float(ssim_metric(y01, gt01).item())
+                    psnr_val = float(psnr_metric(y01, gt01).item())
+                else:
+                    from src.utils.metrics import ssim as ssim_fn, psnr as psnr_fn
+                    ssim_val = float(ssim_fn(y01, gt01).item())
+                    psnr_val = float(psnr_fn(y01, gt01).item())
             return out_img, ssim_val, psnr_val
 
     with gr.Blocks() as demo:
         gr.Markdown(f"# {title}\n{description}")
         with gr.Row():
             in_img = gr.Image(type="pil", label="Entrada T1 (grayscale)")
+            gt_img = gr.Image(type="pil", label="T2 Ground Truth (opcional)")
+        with gr.Row():
             out_img = gr.Image(type="pil", label="Salida T2 (generada)")
-        ssim_box = gr.Number(label="SSIM (opcional)", value=None)
-        psnr_box = gr.Number(label="PSNR (opcional)", value=None)
+        with gr.Row():
+            ssim_box = gr.Number(label="SSIM vs GT", value=None)
+            psnr_box = gr.Number(label="PSNR vs GT", value=None)
         btn = gr.Button("Generar")
-        btn.click(fn=infer, inputs=[in_img], outputs=[out_img, ssim_box, psnr_box])
+        btn.click(fn=infer, inputs=[in_img, gt_img], outputs=[out_img, ssim_box, psnr_box])
     return demo
 
 
