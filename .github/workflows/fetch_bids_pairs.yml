@@ -71,6 +71,14 @@ jobs:
               git checkout "tags/${{ github.event.inputs.version }}"
             fi
             git annex init || true
+            # Diagnostics and attempts to fetch
+            git annex info || true
+            ls sub-*/anat/*_T1w.nii* 2>/dev/null | head -n 5 || true
+            t1sample=$(ls sub-*/anat/*_T1w.nii* 2>/dev/null | head -n 1 || true)
+            if [ -n "$t1sample" ]; then
+              git annex whereis "$t1sample" || true
+            fi
+            for r in openneuro s3-PUBLIC gins3 aws web; do git annex enableremote "$r" || true; done
             git annex get sub-*/**/anat/*_T1w.nii* sub-*/**/anat/*_T2w.nii* || true
             cd -
           fi
