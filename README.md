@@ -85,6 +85,14 @@ pip install -r requirements.txt
 
 Ver guías en `data/README.md`. Resumen rápido (Windows PowerShell):
 
+- OpenNeuro ds005533 (T1w/T2w) → pares para Pix2Pix:
+  1) Instala OpenNeuro CLI (requiere Node.js):
+     npm install -g openneuro-cli
+  2) Descarga solo anat/T1w y T2w:
+     powershell -ExecutionPolicy Bypass -File scripts/download_openneuro_ds005533.ps1
+  3) Convierte 3 pares a PNG 256x256:
+     python scripts/prepare_bids_pairs.py --ds_root data/openneuro/ds005533 --out_root data/paired_mri --max_pairs 3
+
 - IXI Brain MRI (T1/T2 → pares para Pix2Pix):
 
 ```powershell
