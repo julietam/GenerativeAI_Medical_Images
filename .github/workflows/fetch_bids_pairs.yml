@@ -51,10 +51,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install datalad datalad-installer
-          python - << 'PY'
-from datalad_installer import Installer
-Installer().install('git-annex')
-PY
+          python -c "from datalad_installer import Installer; Installer().install('git-annex')"
 
       - name: Fallback via DataLad if OpenNeuro CLI failed or empty
         run: |
