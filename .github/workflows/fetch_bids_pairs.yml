@@ -42,12 +42,24 @@ jobs:
             --include "sub-*/**/anat/*_T1w.nii*" \
             --include "sub-*/**/anat/*_T2w.nii*"
 
+      - name: Setup Python (for DataLad fallback)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install DataLad via pip (and git-annex via datalad-installer)
+        run: |
+          pip install --upgrade pip
+          pip install datalad datalad-installer
+          python - << 'PY'
+from datalad_installer import Installer
+Installer().install('git-annex')
+PY
+
       - name: Fallback via DataLad if OpenNeuro CLI failed or empty
         run: |
           set -e
           if ! find data/openneuro/${{ github.event.inputs.dataset }} -type f -name "*_T1w.nii*" -o -name "*_T2w.nii*" | grep -q "."; then
-            sudo apt-get update
-            sudo apt-get install -y datalad git-annex
             datalad install -r -g -s https://github.com/OpenNeuroDatasets/${{ github.event.inputs.dataset }}.git data/openneuro/${{ github.event.inputs.dataset }}
             cd data/openneuro/${{ github.event.inputs.dataset }}
             if git rev-parse --verify "refs/tags/${{ github.event.inputs.version }}" >/dev/null 2>&1; then
