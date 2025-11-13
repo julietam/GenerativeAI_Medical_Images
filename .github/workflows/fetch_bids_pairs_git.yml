@@ -52,24 +52,39 @@ jobs:
             git checkout "tags/${{ github.event.inputs.version }}"
           fi
           git annex init || true
+          cd -
+
+      - name: Annex diagnostics and fetch T1w/T2w
+        run: |
+          set -e
+          cd data/ds005533
+          git annex info || true
+          ls sub-*/anat/*_T1w.nii* 2>/dev/null | head -n 5 || true
+          t1sample=$(ls sub-*/anat/*_T1w.nii* 2>/dev/null | head -n 1 || true)
+          if [ -n "$t1sample" ]; then
+            git annex whereis "$t1sample" || true
+          fi
+          # Try enabling common special remotes and fetch
+          for r in openneuro s3-PUBLIC gins3 aws web; do git annex enableremote "$r" || true; done
           git annex get sub-*/**/anat/*_T1w.nii* sub-*/**/anat/*_T2w.nii* || true
           cd -
 
       - name: Convert up to N pairs to PNG (256x256)
         run: |
+          mkdir -p data/paired_mri/T1 data/paired_mri/T2
           python scripts/prepare_bids_pairs.py \
             --ds_root data/ds005533 \
             --out_root data/paired_mri \
             --max_pairs ${{ github.event.inputs.max_pairs }}
 
-      - name: Commit and push generated PNGs
+      - name: Commit and push generated PNGs (if any)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/paired_mri
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
+          if [ -d data/paired_mri ] && find data/paired_mri -type f -name "*.png" | grep -q "."; then
+            git add data/paired_mri
+            git commit -m "Add paired PNGs from git mirror (max_pairs=${{ github.event.inputs.max_pairs }})" || true
+            git push || true
           else
-            git commit -m "Add paired PNGs from git mirror (max_pairs=${{ github.event.inputs.max_pairs }})"
-            git push
+            echo "No PNGs generated; skipping commit."
           fi
