@@ -86,6 +86,11 @@ pip install -r requirements.txt
 Ver guías en `data/README.md`. Resumen rápido (Windows PowerShell):
 
 - OpenNeuro ds005533 (T1w/T2w) → pares para Pix2Pix:
+  Opción A (GitHub Actions – recomendado):
+  - En la pestaña Actions del repo, ejecuta el workflow "Fetch BIDS pairs" (workflow_dispatch)
+    con dataset=ds005533, version=1.0.0, max_pairs=3. Esto descargará T1w/T2w y subirá PNGs a `data/paired_mri/`.
+  
+  Opción B (local):
   1) Instala OpenNeuro CLI (requiere Node.js):
      npm install -g openneuro-cli
   2) Descarga solo anat/T1w y T2w:

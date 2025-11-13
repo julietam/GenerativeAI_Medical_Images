@@ -1,0 +1,69 @@
+name: Fetch BIDS pairs
+
+on:
+  workflow_dispatch:
+    inputs:
+      dataset:
+        description: OpenNeuro dataset id (e.g., ds005533)
+        required: true
+        default: ds005533
+      version:
+        description: Dataset version (e.g., 1.0.0)
+        required: true
+        default: 1.0.0
+      max_pairs:
+        description: Number of T1w/T2w subject pairs to convert
+        required: true
+        default: "3"
+
+jobs:
+  fetch-and-convert:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install OpenNeuro CLI
+        run: npm install -g openneuro-cli
+
+      - name: Download T1w/T2w (anat) from OpenNeuro
+        run: |
+          mkdir -p data/openneuro/${{ github.event.inputs.dataset }}
+          openneuro download ${{ github.event.inputs.dataset }}:${{ github.event.inputs.version }} \
+            data/openneuro/${{ github.event.inputs.dataset }} \
+            --include "sub-*/**/anat/*_T1w.nii*" \
+            --include "sub-*/**/anat/*_T2w.nii*"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install Python dependencies
+        run: pip install nibabel scikit-image Pillow
+
+      - name: Convert up to N pairs to PNG (256x256)
+        run: |
+          python scripts/prepare_bids_pairs.py \
+            --ds_root data/openneuro/${{ github.event.inputs.dataset }} \
+            --out_root data/paired_mri \
+            --max_pairs ${{ github.event.inputs.max_pairs }}
+
+      - name: Commit and push generated PNGs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/paired_mri
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Add paired PNGs from ${{ github.event.inputs.dataset }}:${{ github.event.inputs.version }} (max_pairs=${{ github.event.inputs.max_pairs }})"
+            git push
+          fi
