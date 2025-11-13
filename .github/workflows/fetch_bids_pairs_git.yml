@@ -33,11 +33,12 @@ jobs:
       - name: Install Python deps (datalad + nibabel + skimage + pillow)
         run: |
           pip install --upgrade pip
-          pip install datalad datalad-installer nibabel scikit-image Pillow
-          python - << 'PY'
-from datalad_installer import Installer
-Installer().install('git-annex')
-PY
+          pip install datalad nibabel scikit-image Pillow
+
+      - name: Install git-annex via apt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git-annex
 
       - name: Clone BIDS dataset via DataLad
         run: |
