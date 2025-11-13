@@ -45,11 +45,14 @@ jobs:
           rm -rf data/ds005533
           git clone ${{ github.event.inputs.repo }} data/ds005533
           cd data/ds005533
+          # Configure git identity for annex operations
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           if [ -n "${{ github.event.inputs.version }}" ] && git rev-parse --verify "refs/tags/${{ github.event.inputs.version }}" >/dev/null 2>&1; then
             git checkout "tags/${{ github.event.inputs.version }}"
           fi
           git annex init || true
-          git annex get "sub-*/**/anat/*_T1w.nii*" "sub-*/**/anat/*_T2w.nii*" || true
+          git annex get sub-*/**/anat/*_T1w.nii* sub-*/**/anat/*_T2w.nii* || true
           cd -
 
       - name: Convert up to N pairs to PNG (256x256)
