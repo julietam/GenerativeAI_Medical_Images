@@ -1,0 +1,16 @@
+# Data (raw BIDS clones and downloads)
+data/openneuro/
+data/ds005533/
+
+# Keep only small derived PNGs
+!data/paired_mri/
+!data/paired_mri/T1/
+!data/paired_mri/T2/
+
+# Python/venv
+.venv/
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/

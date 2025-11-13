@@ -87,8 +87,9 @@ Ver guías en `data/README.md`. Resumen rápido (Windows PowerShell):
 
 - OpenNeuro ds005533 (T1w/T2w) → pares para Pix2Pix:
   Opción A (GitHub Actions – recomendado):
-  - En la pestaña Actions del repo, ejecuta el workflow "Fetch BIDS pairs" (workflow_dispatch)
-    con dataset=ds005533, version=1.0.0, max_pairs=3. Esto descargará T1w/T2w y subirá PNGs a `data/paired_mri/`.
+  - En la pestaña Actions del repo, puedes usar cualquiera de:
+    - "Fetch BIDS pairs (Git mirror)": clona el repo OpenNeuroDatasets y descarga solo T1w/T2w, convierte y sube PNGs a `data/paired_mri/`.
+    - "Fetch BIDS pairs": intenta OpenNeuro CLI y, si falla, usa DataLad.
   
   Opción B (local):
   1) Instala OpenNeuro CLI (requiere Node.js):
