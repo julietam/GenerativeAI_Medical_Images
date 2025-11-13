@@ -30,25 +30,29 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install Python deps (datalad + nibabel + skimage + pillow)
+      - name: Install Python deps (nibabel + skimage + pillow)
         run: |
           pip install --upgrade pip
-          pip install datalad nibabel scikit-image Pillow
+          pip install nibabel scikit-image Pillow
 
       - name: Install git-annex via apt
         run: |
           sudo apt-get update
           sudo apt-get install -y git-annex
 
-      - name: Clone BIDS dataset via DataLad
+      - name: Clone BIDS dataset via git + git-annex
         run: |
-          mkdir -p data/ds005533
-          datalad install -r -g -s ${{ github.event.inputs.repo }} data/ds005533
+          rm -rf data/ds005533
+          git clone ${{ github.event.inputs.repo }} data/ds005533
           cd data/ds005533
+          # Configure git identity for annex operations
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           if [ -n "${{ github.event.inputs.version }}" ] && git rev-parse --verify "refs/tags/${{ github.event.inputs.version }}" >/dev/null 2>&1; then
             git checkout "tags/${{ github.event.inputs.version }}"
           fi
-          datalad get sub-*/**/anat/*_T1w.nii* sub-*/**/anat/*_T2w.nii* || true
+          git annex init || true
+          git annex get sub-*/**/anat/*_T1w.nii* sub-*/**/anat/*_T2w.nii* || true
           cd -
 
       - name: Convert up to N pairs to PNG (256x256)
