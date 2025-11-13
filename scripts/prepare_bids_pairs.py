@@ -9,23 +9,30 @@ from skimage.transform import resize
 from PIL import Image
 
 
-def to_png_slice(vol_path: Path, img_size: int = 256, z_policy: str = "center") -> np.ndarray:
-    img = nib.load(str(vol_path))
-    data = img.get_fdata().astype(np.float32)
-    # choose axial slice
-    if data.ndim == 4:
-        data = data[..., 0]
-    z = data.shape[2] // 2 if z_policy == "center" else max(0, int(z_policy))
-    sl = data[:, :, z]
-    # min-max normalize per volume slice
+def _normalize_resize(sl: np.ndarray, img_size: int) -> np.ndarray:
     mn, mx = float(sl.min()), float(sl.max())
     if mx > mn:
         sl = (sl - mn) / (mx - mn)
     else:
         sl = np.zeros_like(sl, dtype=np.float32)
     sl = resize(sl, (img_size, img_size), preserve_range=True, anti_aliasing=True)
-    sl = np.clip(sl, 0.0, 1.0)
-    return sl
+    return np.clip(sl, 0.0, 1.0)
+
+
+def to_png_slice(vol_path: Path, img_size: int = 256, z_policy: str | int = "center") -> np.ndarray:
+    img = nib.load(str(vol_path))
+    data = img.get_fdata().astype(np.float32)
+    # choose axial slice
+    if data.ndim == 4:
+        data = data[..., 0]
+    if isinstance(z_policy, int):
+        z = max(0, min(int(z_policy), data.shape[2] - 1))
+    elif z_policy == "center":
+        z = data.shape[2] // 2
+    else:
+        z = max(0, min(int(z_policy), data.shape[2] - 1))
+    sl = data[:, :, z]
+    return _normalize_resize(sl, img_size)
 
 
 def save_png(arr01: np.ndarray, out_path: Path):
@@ -60,10 +67,12 @@ def main():
     ap.add_argument('--out_root', type=str, default='data/paired_mri')
     ap.add_argument('--img_size', type=int, default=256)
     ap.add_argument('--max_pairs', type=int, default=3)
+    ap.add_argument('--slice_offsets', type=str, default='0,-1,1', help='Comma-separated axial offsets relative to center (e.g., 0,-1,1)')
     args = ap.parse_args()
 
     ds_root = Path(args.ds_root)
     out_root = Path(args.out_root)
+    offsets = [int(x) for x in args.slice_offsets.split(',') if x.strip() != '']
 
     pairs = find_subject_pairs(ds_root, max_pairs=args.max_pairs)
     if not pairs:
@@ -71,11 +80,20 @@ def main():
         return
 
     for t1p, t2p, sid in pairs:
-        t1 = to_png_slice(t1p, img_size=args.img_size)
-        t2 = to_png_slice(t2p, img_size=args.img_size)
-        save_png(t1, out_root / 'T1' / f'{sid}.png')
-        save_png(t2, out_root / 'T2' / f'{sid}.png')
-        print(f'Wrote {sid} -> {out_root}')
+        # Load volumes once to determine center and bounds
+        img1 = nib.load(str(t1p)); vol1 = img1.get_fdata().astype(np.float32)
+        img2 = nib.load(str(t2p)); vol2 = img2.get_fdata().astype(np.float32)
+        if vol1.ndim == 4: vol1 = vol1[..., 0]
+        if vol2.ndim == 4: vol2 = vol2[..., 0]
+        Z = min(vol1.shape[2], vol2.shape[2])
+        center = Z // 2
+        for off in offsets:
+            zi = max(0, min(center + off, Z - 1))
+            sl1 = _normalize_resize(vol1[:, :, zi], args.img_size)
+            sl2 = _normalize_resize(vol2[:, :, zi], args.img_size)
+            save_png(sl1, out_root / 'T1' / f'{sid}_z{zi:03d}.png')
+            save_png(sl2, out_root / 'T2' / f'{sid}_z{zi:03d}.png')
+        print(f'Wrote {sid} ({len(offsets)} slices) -> {out_root}')
 
 
 if __name__ == '__main__':
