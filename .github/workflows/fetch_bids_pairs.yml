@@ -33,13 +33,29 @@ jobs:
       - name: Install OpenNeuro CLI
         run: npm install -g openneuro-cli
 
-      - name: Download T1w/T2w (anat) from OpenNeuro
+      - name: Try OpenNeuro CLI download (anat T1w/T2w)
+        continue-on-error: true
         run: |
           mkdir -p data/openneuro/${{ github.event.inputs.dataset }}
           openneuro download ${{ github.event.inputs.dataset }}:${{ github.event.inputs.version }} \
             data/openneuro/${{ github.event.inputs.dataset }} \
             --include "sub-*/**/anat/*_T1w.nii*" \
             --include "sub-*/**/anat/*_T2w.nii*"
+
+      - name: Fallback via DataLad if OpenNeuro CLI failed or empty
+        run: |
+          set -e
+          if ! find data/openneuro/${{ github.event.inputs.dataset }} -type f -name "*_T1w.nii*" -o -name "*_T2w.nii*" | grep -q "."; then
+            sudo apt-get update
+            sudo apt-get install -y datalad git-annex
+            datalad install -r -g -s https://github.com/OpenNeuroDatasets/${{ github.event.inputs.dataset }}.git data/openneuro/${{ github.event.inputs.dataset }}
+            cd data/openneuro/${{ github.event.inputs.dataset }}
+            if git rev-parse --verify "refs/tags/${{ github.event.inputs.version }}" >/dev/null 2>&1; then
+              git checkout "tags/${{ github.event.inputs.version }}"
+            fi
+            datalad get sub-*/**/anat/*_T1w.nii* sub-*/**/anat/*_T2w.nii* || true
+            cd -
+          fi
 
       - name: Setup Python
         uses: actions/setup-python@v5
