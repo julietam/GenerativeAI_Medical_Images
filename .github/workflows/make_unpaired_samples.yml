@@ -1,0 +1,46 @@
+name: Make sample unpaired MRI/CT
+
+on:
+  workflow_dispatch:
+    inputs:
+      n:
+        description: Number of images per domain
+        required: true
+        default: "16"
+      size:
+        description: Image size (square)
+        required: true
+        default: "256"
+
+jobs:
+  generate-samples:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install deps
+        run: pip install Pillow numpy
+
+      - name: Generate sample unpaired datasets
+        run: |
+          python scripts/make_sample_data.py
+
+      - name: Commit and push sample data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/sample_unpaired_mri data/sample_unpaired_ct data/sample_mri_pairs
+          if git diff --cached --quiet; then
+            echo "No sample changes to commit."
+          else
+            git commit -m "Add/update sample unpaired MRI/CT (and sample pairs)"
+            git push
+          fi

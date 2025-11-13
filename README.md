@@ -161,6 +161,8 @@ Recomendamos seguir el orden:
 ## 🧪 Demos y Scripts
 
 ### Gradio: Pix2Pix MRI T1→T2
+
+Para datos de ejemplo (unpaired/pairs): en la pestaña Actions ejecuta "Make sample unpaired MRI/CT"; generará `data/sample_unpaired_mri`, `data/sample_unpaired_ct` y `data/sample_mri_pairs/` automáticamente.
 - Lanza una UI mínima para cargar una T1 (PNG/JPG) y generar T2.
 - Requiere un checkpoint del generador (por ejemplo, entrenado con `scripts/train_pix2pix.py`).
 
